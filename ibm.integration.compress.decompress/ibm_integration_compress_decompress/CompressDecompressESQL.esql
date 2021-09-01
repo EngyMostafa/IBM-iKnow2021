@@ -1,0 +1,13 @@
+BROKER SCHEMA ibm_integration_compress_decompress
+
+
+CREATE FUNCTION compressMsg(IN msg CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "CompressDecompress.compressEventPayload";
+
+
+CREATE FUNCTION decompressMsg(IN msg CHARACTER) 
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "CompressDecompress.decompressEventPayload";

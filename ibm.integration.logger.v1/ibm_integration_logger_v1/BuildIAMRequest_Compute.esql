@@ -1,0 +1,25 @@
+BROKER SCHEMA ibm_integration_logger_v1
+
+
+CREATE COMPUTE MODULE BuildIAMRequest_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET OutputRoot.HTTPInputHeader."Content-Type" = 'application/x-www-form-urlencoded';
+		DECLARE chRequestBody CHARACTER;
+		SET chRequestBody = cast('grant_type=' || 'xxx' || '&apikey=' || 'yyy' as CHARACTER); --xxx to be replaced with grant_type & yyy to be replaced with apiKey
+	 	SET OutputRoot.BLOB.BLOB = cast(chRequestBody as BLOB CCSID 1208);
+	 	SET OutputLocalEnvironment.Destination.HTTP.RequestURL = 'https://iam.cloud.ibm.com/identity/token';
+		RETURN TRUE;
+	END;
+
+END MODULE;
+
+
+CREATE COMPUTE MODULE CacheAccessToken_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Variables.cosToken ='Bearer ' ||  InputRoot.JSON.Data.access_token;
+		RETURN TRUE;
+	END;
+
+END MODULE;

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmTrace.msgnode="ComIbmTrace.msgnode" xmlns:com_ibm_connector_kafka_ComIbmEventInput.msgnode="com/ibm/connector/kafka/ComIbmEventInput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:ibm_integration_logger_v1_Logger.subflow="ibm_integration_logger_v1/Logger.subflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility"
+    nsURI="KafkaConsumer.msgflow" nsPrefix="KafkaConsumer.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <translation xmi:type="utility:TranslatableString" key="KafkaConsumer" bundleName="KafkaConsumer" pluginId="ibm.kafka.consumer"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ibm.kafka.consumer/icons/full/obj16/KafkaConsumer.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ibm.kafka.consumer/icons/full/obj30/KafkaConsumer.gif"/>
+    <composition>
+      <nodes xmi:type="com_ibm_connector_kafka_ComIbmEventInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="51,205" connectorName="Kafka" topicName="topicName" bootstrapServers="kafka-0.xx" groupId="appConnectLogging" initialOffset="earliest" enableAutoCommit="true" useClientIdSuffix="true" connectionTimeout="15" sessionTimeout="10" receiveBatchSize="32" securityProtocol="SASL_SSL" sslProtocol="TLSv1.2" messageDomainProperty="JSON" validateTiming="deferred" parserXmlnscBuildTreeUsingXMLSchema="false"
+          parserXmlnscUseForXmlnsDomain="false" parserXmlnscMixedContentRetainMode="none" parserXmlnscCommentsRetainMode="none" parserXmlnscProcessingInstructionsRetainMode="none" validateMaster="none" validateFailureAction="exception" componentLevel="flow" additionalInstances="0">
+        <translation xmi:type="utility:ConstantString" string="KafkaConsumer"/>
+      </nodes>
+      <nodes xmi:type="ibm_integration_logger_v1_Logger.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="382,206" logDescription="KafkaLogger">
+        <translation xmi:type="utility:ConstantString" string="Logger"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="219,205" computeExpression="esql://routine/#KafkaConsumer_DeCompress.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Decompress"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTrace.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="208,367" destination="localError" pattern="${Body}&#xD;&#xA;${ExceptionList}" messageNumber="3064">
+        <translation xmi:type="utility:ConstantString" string="KafkaConsumerError"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer/>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

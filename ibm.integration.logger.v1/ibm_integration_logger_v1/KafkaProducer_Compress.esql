@@ -1,0 +1,80 @@
+BROKER SCHEMA ibm_integration_logger_v1
+PATH ibm_integration_compress_decompress;
+DECLARE FlowName EXTERNAL CHARACTER '';
+
+CREATE COMPUTE MODULE KafkaProducer_Compress
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF (InputExceptionList.*.* IS NOT NULL) THEN 
+			DECLARE messageNumber INTEGER;
+			DECLARE messageText CHAR;
+			DECLARE body CHAR;
+			CALL getLastExceptionDetail(InputExceptionList,messageNumber,messageText,body);
+			SET OutputRoot.JSON.Data.error = messageText; 
+			SET OutputRoot.JSON.Data.body = InputExceptionList;
+		ELSEIF  InputRoot.BLOB.BLOB IS NOT NULL  THEN
+			DECLARE responseError CHARACTER  CAST(InputRoot.BLOB.BLOB  AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId ENCODING InputRoot.Properties.Encoding);
+		    SET OutputRoot.JSON.Data.error = responseError;  
+		ELSE
+			DECLARE chrInputPayload CHARACTER CAST(ASBITSTREAM(InputRoot.JSON.Data) AS CHARACTER CCSID 1208);
+			--Check if the incoming request size is greater than 0.9 Megabytes, then compress it as kafka's max. size limit is 1 MB
+			IF LENGTH(chrInputPayload) > Environment.Configuration.DB.kafka.maxKafkaMsgSize THEN --900000 bytes 
+				DECLARE compressedPayload CHARACTER;
+				Call compressMsg(chrInputPayload) INTO compressedPayload;
+				SET OutputRoot.JSON.Data.payload = compressedPayload;
+				--Set a new flag with true to be used then when we retrieve the msg to determin if it is compressed or not,
+				--so that we can decompress or get the msg from kafka as it is
+				SET OutputRoot.JSON.Data.isCompressed = TRUE;
+			ELSE 
+				SET OutputRoot.JSON.Data = InputRoot.JSON.Data;
+			END IF;
+		END IF;
+		
+		SET OutputRoot.JSON.Data.metadata.LogDescription = logDescription;
+		SET OutputRoot.JSON.Data.metadata.EventTimeStamp = CAST(CURRENT_GMTTIMESTAMP AS CHARACTER FORMAT 'yyyy-MM-dd HH:mm:ss.SSSZ');
+		
+		SET OutputLocalEnvironment.Destination.Kafka.Output.topicName = 'topicName';
+		
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	
+	CREATE PROCEDURE getLastExceptionDetail(IN InputTree reference,OUT messageNumber integer,
+	OUT messageText char,OUT body char)
+	/****************************************************************************
+	* A procedure that will get the details of the last exception from a message
+	* IN InputTree: The incoming exception list
+	* IN messageNumber: The last message numberr.
+	* IN messageText: The last message text.
+	*****************************************************************************/
+	BEGIN
+		-- Create a reference to the first child of the exception list
+		declare ptrException reference to InputTree.*[1];
+		-- keep looping while the moves to the child of exception list work
+		WHILE lastmove(ptrException) DO
+			-- store the current values for the error number and text
+			IF ptrException.Number is not null THEN
+				SET messageNumber = ptrException.Number;
+	 			
+	 			SET messageText =   ptrException.Text; 
+	 			SET body = ptrException.Insert.Text; 
+	 			 
+			END IF;
+			-- now move to the last child which should be the next exceptionlist
+			move ptrException lastchild;
+		END WHILE;
+	END;
+END MODULE;
